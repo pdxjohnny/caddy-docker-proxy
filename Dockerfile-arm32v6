@@ -1,3 +1,10 @@
+FROM golang:1.12 AS builder
+ENV GO111MODULE on
+WORKDIR /go/src/app
+COPY . .
+RUN go get -d -v ./... && \
+  CGO_ENABLED=0 GOARCH=arm GOARM=6 GOOS=linux go build -o caddy
+
 FROM alpine:3.7 as alpine
 RUN apk add -U --no-cache ca-certificates
 
@@ -11,6 +18,6 @@ ENV HOME /root
 WORKDIR /
 COPY --from=alpine /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-COPY artifacts/binaries/linux/arm32v6/caddy /bin/
+COPY --from=builder /go/src/app/caddy /bin/
 
 ENTRYPOINT ["/bin/caddy"]
